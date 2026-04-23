@@ -3,20 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>🎮 لعبتنا احنا الاتنين | حبيبي وحبيبتي</title>
-    <!-- Firebase SDKs - النسخة اللي بتشتغل بدون import -->
+    <title>🎮 عالمنا احنا الاتنين | ألعاب وتحديات</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: 'Segoe UI', 'Cairo', system-ui, sans-serif;
+            font-family: 'Cairo', 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(145deg, #2b1a2e 0%, #1a0f1f 100%);
             min-height: 100vh;
             padding: 15px;
         }
-        .container { max-width: 600px; margin: 0 auto; }
+        .container { max-width: 550px; margin: 0 auto; }
         
+        /* البطاقات */
+        .card {
+            background: rgba(255,255,255,0.96);
+            border-radius: 45px;
+            padding: 25px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        h2 { color: #b13e5c; text-align: center; margin-bottom: 15px; font-size: 1.6rem; }
+        h3 { color: #b13e5c; margin: 15px 0 10px; font-size: 1.2rem; }
+        
+        /* الأزرار والتبويبات */
         .tabs {
             display: flex;
             gap: 8px;
@@ -49,10 +60,8 @@
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        h2 { color: #b13e5c; text-align: center; margin-bottom: 20px; font-size: 1.5rem; }
-        
         /* الشات */
-        .chat-container { display: flex; flex-direction: column; height: 400px; }
+        .chat-container { display: flex; flex-direction: column; height: 380px; }
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -98,136 +107,153 @@
             cursor: pointer;
         }
         
-        /* الألغاز */
-        .puzzle-box { text-align: center; }
-        .question-text {
-            font-size: 1.2rem;
+        /* أزرار الألعاب */
+        .game-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .game-btn {
+            background: #ff8aa1;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            color: white;
             font-weight: bold;
-            color: #a12a44;
-            margin: 15px 0;
+            cursor: pointer;
+            flex: 1;
+            min-width: 100px;
+        }
+        .game-btn.waiting {
+            background: #b0a0a0;
+            opacity: 0.7;
+        }
+        
+        /* XO لعبة */
+        .xo-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+        .xo-cell {
+            aspect-ratio: 1;
+            background: #ffe4ec;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid #ffb7c5;
+        }
+        .xo-cell.x { color: #ff6b8b; }
+        .xo-cell.o { color: #6b5b95; }
+        
+        /* لعبة الأرقام */
+        .number-input {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .number-input input {
+            width: 80px;
+            padding: 12px;
+            font-size: 1.2rem;
+            text-align: center;
+            border: 2px solid #ffb7c5;
+            border-radius: 20px;
+        }
+        
+        /* التحديات */
+        .challenge-box {
             background: #ffe4ec;
             padding: 20px;
             border-radius: 30px;
+            text-align: center;
+            margin: 15px 0;
         }
-        .options { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
-        .option-btn {
-            background: #ff8aa1;
-            border: none;
-            padding: 10px 18px;
+        .waiting-box {
+            background: #fff0f3;
+            padding: 30px;
             border-radius: 40px;
-            color: white;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .option-btn:active { transform: scale(0.95); }
-        .score-area {
-            margin-top: 15px;
-            padding: 15px;
-            background: #ffe4ec;
-            border-radius: 30px;
-            font-size: 1rem;
-            color: #b13e5c;
-            font-weight: bold;
-        }
-        
-        /* إعدادات المستخدم */
-        .setup-area {
-            background: rgba(255,255,255,0.95);
-            padding: 30px 20px;
-            border-radius: 50px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .setup-area h2 { color: #b13e5c; margin-bottom: 15px; }
-        .setup-area p { color: #4a2c33; margin-bottom: 20px; }
-        .setup-area input {
-            padding: 12px 20px;
-            border-radius: 50px;
-            border: 2px solid #ffb7c5;
-            margin: 10px;
-            font-size: 1rem;
-            width: 80%;
-            text-align: center;
-        }
-        .setup-area button {
-            background: #ff6b8b;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 50px;
-            color: white;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        
-        .status-badge {
-            background: #ff6b8b20;
-            padding: 8px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            color: #b13e5c;
-            margin-bottom: 10px;
             text-align: center;
         }
         
         button:active { transform: scale(0.96); }
+        .status-text { font-size: 0.85rem; color: #777; margin-top: 10px; }
         
         @media (max-width: 550px) {
             .tab-btn { padding: 6px 14px; font-size: 0.8rem; }
             h2 { font-size: 1.3rem; }
-            .question-text { font-size: 1rem; }
+            .xo-cell { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- شاشة إعداد الاسم -->
-    <div id="setupScreen" class="setup-area">
-        <div style="font-size: 3rem;">💕</div>
-        <h2>أهلاً بيكي يا أجمل بنت في الدنيا</h2>
-        <p>قوليلي اسمك عشان نبدأ اللعبة سوا 🤍</p>
-        <input type="text" id="userName" placeholder="أكتبي اسمك هنا..." autocomplete="off">
-        <button onclick="setUserName()">✨ أبدأي اللعبة ✨</button>
+    <!-- شاشة تسجيل الدخول -->
+    <div id="setupScreen" class="card" style="text-align: center;">
+        <div style="font-size: 3rem;">💕🎮</div>
+        <h2>أهلاً يا أجمل بنت في الدنيا</h2>
+        <p>قولي اسمك عشان نبدأ المغامرة سوا 🤍</p>
+        <input type="text" id="userName" placeholder="أكتبي اسمك..." autocomplete="off" style="padding: 12px; border-radius: 50px; border: 2px solid #ffb7c5; width: 80%; margin: 10px;">
+        <br>
+        <button onclick="setUserName()" style="background: #ff6b8b; padding: 12px 30px;">✨ أبدأي ✨</button>
     </div>
 
-    <!-- اللعبة نفسها (تظهر بعد ما تدخل الاسم) -->
+    <!-- اللعبة الرئيسية -->
     <div id="gameScreen" style="display: none;">
         <div class="tabs">
             <button class="tab-btn active" data-tab="chat">💬 شاتنا</button>
-            <button class="tab-btn" data-tab="puzzle">🧩 ألغازنا</button>
+            <button class="tab-btn" data-tab="games">🎮 ألعابنا</button>
         </div>
 
+        <!-- تبويب الشات -->
         <div id="chat" class="tab-content active">
             <h2>💕 نتكلم مع بعض 💕</h2>
             <div class="chat-container">
                 <div class="messages" id="messages">
-                    <div class="message her">✨ أهلاً يا حبيبي! أنا هنا معاك يا روحي ✨</div>
+                    <div class="message her">✨ أهلاً يا حبيبي! أنا هنا معاك دايماً ✨</div>
                 </div>
                 <div class="chat-input-area">
                     <input type="text" id="chatInput" placeholder="اكتبلي يا حبيبي... 💌" onkeypress="if(event.key==='Enter') sendMessage()">
                     <button onclick="sendMessage()">إرسال ➤</button>
                 </div>
             </div>
-            <div class="status-badge" id="chatStatus">🟢 متصلين ببعض</div>
         </div>
 
-        <div id="puzzle" class="tab-content">
-            <h2>🧠 مين يكسب النقطة؟ 🧠</h2>
-            <div class="puzzle-box">
-                <div class="question-text" id="puzzleQuestion">جاري تحميل اللغز...</div>
-                <div class="options" id="puzzleOptions"></div>
-                <div class="score-area" id="scoreArea">
-                    ⭐ في انتظار المنافس... ⭐
+        <!-- تبويب الألعاب -->
+        <div id="games" class="tab-content">
+            <h2>🎲 اختار لعبة معايا 🎲</h2>
+            
+            <div class="game-selector">
+                <button class="game-btn" onclick="selectGame('xo')">❌⭕ XO تيك تاك تو</button>
+                <button class="game-btn" onclick="selectGame('number')">🔢 تخمين الرقم</button>
+                <button class="game-btn" onclick="selectGame('quick')">⚡ ترتيب سريع</button>
+            </div>
+            
+            <div id="gameArea">
+                <div class="waiting-box">
+                    <div style="font-size: 2.5rem;">🎮</div>
+                    <p style="margin: 15px 0;">اختاري لعبة عشان نبدأ سوا!</p>
+                    <p style="color: #b13e5c;">❤️ أنا مستنيكي يا روحي ❤️</p>
                 </div>
             </div>
-            <div class="status-badge" id="puzzleStatus">⏳ استنى اللغز الجاي</div>
+            <div id="gameStatus" class="status-text" style="text-align: center;"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // ========== 🔥 بيانات Firebase بتاعتك (حطيتها زي ما بعتهالي) 🔥 ==========
+    // 🔥 Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCvn2CsKgRvtcGDNHv-T-y8jCQUz1KTYYI",
         authDomain: "mylovegame.firebaseapp.com",
@@ -235,124 +261,59 @@
         storageBucket: "mylovegame.firebasestorage.app",
         messagingSenderId: "504852537460",
         appId: "1:504852537460:web:bdc7129ae84c8ea9c33121",
-        databaseURL: "https://mylovegame-default-rtdb.firebaseio.com"  // ← ضفت الـ databaseURL
+        databaseURL: "https://mylovegame-default-rtdb.firebaseio.com"
     };
-    // =================================================================
 
-    // تهيئة Firebase
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    
+    const db = firebase.database();
+
     let myName = "";
-    let myScore = 0;
-    let opponentScore = 0;
-    let currentPuzzle = null;
-    let canAnswer = true;
-    let puzzleTimeout = null;
-    let waitingForNext = false;
+    let opponentName = "";
+    let currentGame = null;      // اللعبة الحالية
+    let gameReady = false;       // هل الطرفين جاهزين؟
+    let myTurn = false;          // دوري أنا؟
     
-    // ========== الأسئلة (زود اللي تحب) ==========
-    const questions = [
-        { text: "💕 أول مرة قابلتني فيها كانت فين؟", options: ["في الجامعة/الشغل", "في الحلم", "في الشارع", "على النت"], correct: 0 },
-        { text: "💕 أي لون بحبه عليكي أكتر حاجة؟", options: ["وردي", "أحمر", "أزرق سماوي", "أبيض"], correct: 0 },
-        { text: "💕 أول هدية جبتها ليكي كانت إيه؟", options: ["ورد", "شوكولاتة", "قلادة", "عطر"], correct: 0 },
-        { text: "💕 أغنية بحبها وبفكر بيكي لما بسمعها؟", options: ["بحبك يا حبيبتي", "عيون قلبي", "قدام الناس", "كل سنة وانت حبيبتي"], correct: 1 },
-        { text: "💕 مين اللي قال كلمة 'بحبك' الأول؟", options: ["أنا", "أنتي", "الاتنين مع بعض"], correct: 0 },
-        { text: "💕 أكتر حاجة بحبها فيكي؟", options: ["ضحكتك", "عيونك", "كل حاجة فيكي", "زعلك الحلو"], correct: 2 },
-        { text: "💕 مكان مفضل لينا نتقابل فيه؟", options: ["مكان هادي", "مطعم", "البيت", "أي حتة معاك"], correct: 3 },
-        { text: "💕 صفة بحبها في شخصيتك؟", options: ["حنونة", "مضحكة", "ذكية", "كلهم"], correct: 3 }
-    ];
+    // متغيرات XO
+    let xoBoard = ['', '', '', '', '', '', '', '', ''];
+    let xoGameActive = false;
     
-    function getRandomQuestion() {
-        return questions[Math.floor(Math.random() * questions.length)];
-    }
+    // متغيرات تخمين الرقم
+    let secretNumber = null;
+    let attempts = 0;
     
-    function loadNewPuzzle() {
-        if (waitingForNext) return;
-        
-        const q = getRandomQuestion();
-        currentPuzzle = q;
-        canAnswer = true;
-        waitingForNext = false;
-        
-        document.getElementById('puzzleQuestion').innerHTML = `❓ ${q.text} ❓`;
-        let optionsHtml = '';
-        q.options.forEach((opt, idx) => {
-            optionsHtml += `<button class="option-btn" onclick="submitAnswer(${idx})">${opt}</button>`;
-        });
-        document.getElementById('puzzleOptions').innerHTML = optionsHtml;
-        document.getElementById('puzzleStatus').innerHTML = '⏳ دورك تجاوبي! عندك 30 ثانية ⏳';
-        
-        // مؤقت 30 ثانية
-        if (puzzleTimeout) clearTimeout(puzzleTimeout);
-        puzzleTimeout = setTimeout(() => {
-            if (canAnswer && !waitingForNext) {
-                canAnswer = false;
-                waitingForNext = true;
-                document.getElementById('puzzleOptions').innerHTML = '<p style="color:#b13e5c;">😢 انتهى الوقت! جاري تحضير لغز جديد...</p>';
-                document.getElementById('puzzleStatus').innerHTML = '⏰ الوقت خلص! لغز جديد بعد ثانيتين ⏰';
-                setTimeout(() => {
-                    waitingForNext = false;
-                    loadNewPuzzle();
-                }, 2500);
-            }
-        }, 30000);
-    }
+    // متغيرات الترتيب السريع
+    let sequence = [];
+    let userSequence = [];
     
-    function submitAnswer(selectedIdx) {
-        if (!canAnswer) {
-            alert("انتهى الوقت يا قلبي! استنى اللغز الجاي 🥺");
+    // ========== إعداد المستخدم ==========
+    function setUserName() {
+        let input = document.getElementById('userName');
+        let name = input.value.trim();
+        if (name === "") {
+            alert("اكتبي اسمك يا روحي 🤍");
             return;
         }
-        if (selectedIdx === currentPuzzle.correct) {
-            myScore++;
-            updateMyScore();
-            alert("✅ صحيح ❤️! زادت نقطة في رصيدك يا جميل ✅");
-            document.getElementById('puzzleStatus').innerHTML = '🎉 صح! تستاهلي النقطة 🎉';
-            
-            // نبعت إشارة للكل إن فيه حد كسب
-            database.ref('game/lastWinner').set({
-                name: myName,
-                score: myScore,
-                timestamp: Date.now()
-            });
-        } else {
-            alert("💔 لأ يا حبيبي... مش دي الإجابة الصحيحة. حاولي في اللغز الجاي 💔");
-            document.getElementById('puzzleStatus').innerHTML = '💔 غلط... المرة الجاية إن شاء الله 💔';
-        }
+        myName = name;
         
-        // ننتقل للغز جديد
-        canAnswer = false;
-        waitingForNext = true;
-        setTimeout(() => {
-            waitingForNext = false;
-            loadNewPuzzle();
-        }, 2000);
+        // نعرف مين التاني
+        db.ref('players').set({ player1: myName, timestamp: Date.now() });
+        
+        document.getElementById('setupScreen').style.display = 'none';
+        document.getElementById('gameScreen').style.display = 'block';
+        
+        listenToMessages();
+        listenToGameInvites();
+        updateOpponent();
     }
     
-    function updateMyScore() {
-        database.ref('scores/' + myName).set(myScore);
-    }
-    
-    function loadScores() {
-        database.ref('scores').on('value', (snapshot) => {
-            const scores = snapshot.val();
-            let maxOpponent = 0;
-            if (scores) {
-                for (let name in scores) {
-                    if (name !== myName && scores[name] > maxOpponent) {
-                        maxOpponent = scores[name];
-                    }
-                }
-                opponentScore = maxOpponent;
-            }
-            const scoreElement = document.getElementById('scoreArea');
-            if (scoreElement) {
-                scoreElement.innerHTML = `
-                    ⭐ ${myName} : ${myScore} نقطة ⭐<br>
-                    🌸 المنافس/ة : ${opponentScore} نقطة 🌸<br>
-                    ${myScore > opponentScore ? '🎉 انتي متقدمة يا بطل 🎉' : (myScore < opponentScore ? '💪 لسّه فيه فرصة تقدّمي 💪' : '🤝 متساويين يا روحي 🤝')}
-                `;
+    function updateOpponent() {
+        db.ref('players').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.player1 && data.player1 !== myName) {
+                opponentName = data.player1;
+                document.getElementById('gameStatus').innerHTML = `🌸 متصل مع: ${opponentName} 🌸`;
+            } else {
+                document.getElementById('gameStatus').innerHTML = `⏳ في انتظار وصول الحبيب/ة... ⏳`;
             }
         });
     }
@@ -363,61 +324,286 @@
         let msg = input.value.trim();
         if (msg === "") return;
         
-        const messageData = {
+        db.ref('chat').push({
             name: myName,
             text: msg,
-            timestamp: Date.now()
-        };
-        database.ref('chat').push(messageData);
+            time: Date.now()
+        });
         input.value = '';
     }
     
-    function displayMessage(data) {
-        let msgDiv = document.getElementById('messages');
-        let msgElement = document.createElement('div');
-        msgElement.className = data.name === myName ? 'message me' : 'message her';
-        msgElement.innerHTML = `<strong>${data.name === myName ? 'أنا' : data.name}</strong><br>${data.text}`;
-        msgDiv.appendChild(msgElement);
-        msgDiv.scrollTop = msgDiv.scrollHeight;
+    function listenToMessages() {
+        db.ref('chat').on('child_added', (snapshot) => {
+            let msg = snapshot.val();
+            let msgDiv = document.getElementById('messages');
+            let el = document.createElement('div');
+            el.className = msg.name === myName ? 'message me' : 'message her';
+            el.innerHTML = `<strong>${msg.name === myName ? 'أنا' : msg.name}</strong><br>${msg.text}`;
+            msgDiv.appendChild(el);
+            msgDiv.scrollTop = msgDiv.scrollHeight;
+        });
     }
     
-    // ========== إعداد المستخدم ==========
-    function setUserName() {
-        let nameInput = document.getElementById('userName');
-        let name = nameInput.value.trim();
-        if (name === "") {
-            alert("اكتبي اسمك يا روحي 🤍");
+    // ========== نظام انتظار الطرف الآخر ==========
+    function selectGame(gameType) {
+        if (!opponentName) {
+            alert("استنى شوية يا حبيبي، لسّه الحبيب/ة مجاش 🥺");
             return;
         }
-        myName = name;
         
-        document.getElementById('setupScreen').style.display = 'none';
-        document.getElementById('gameScreen').style.display = 'block';
-        
-        // تحميل أول لغز
-        loadNewPuzzle();
-        
-        // تحميل النقاط
-        loadScores();
-        
-        // استماع للشات
-        database.ref('chat').on('child_added', (snapshot) => {
-            displayMessage(snapshot.val());
+        // نبعت دعوة للعبة
+        db.ref('gameInvite').set({
+            from: myName,
+            game: gameType,
+            status: 'waiting',
+            timestamp: Date.now()
         });
         
-        // استماع للفائزين (مجرد تحفيز)
-        database.ref('game/lastWinner').on('value', (snapshot) => {
-            const winner = snapshot.val();
-            if (winner && winner.name !== myName) {
-                document.getElementById('puzzleStatus').innerHTML = `🎉 ${winner.name} كسب النقطة الأخيرة! تقدري تتفوقي عليه 🎉`;
-                setTimeout(() => {
-                    if (document.getElementById('puzzleStatus')) {
-                        document.getElementById('puzzleStatus').innerHTML = '⏳ لغز جديد جاهز ⏳';
-                    }
-                }, 3000);
+        document.getElementById('gameArea').innerHTML = `
+            <div class="waiting-box">
+                <div style="font-size: 2rem;">⏳</div>
+                <p>بعتها دعوة للعبة ${gameType === 'xo' ? 'XO' : (gameType === 'number' ? 'تخمين الرقم' : 'الترتيب السريع')}</p>
+                <p>في انتظار قبول ${opponentName}...</p>
+                <div style="margin-top: 15px;">💕❤️💕</div>
+            </div>
+        `;
+        
+        // نسمع للرد
+        db.ref('gameInvite/status').on('value', (snapshot) => {
+            const status = snapshot.val();
+            if (status === 'accepted') {
+                startGame(gameType);
+            } else if (status === 'rejected') {
+                document.getElementById('gameArea').innerHTML = `
+                    <div class="waiting-box">
+                        <p>😢 ${opponentName} رفض اللعبة... جربي تاني 😢</p>
+                        <button onclick="selectGame('${gameType}')" style="margin-top: 15px;">أعيدي المحاولة</button>
+                    </div>
+                `;
+            }
+        }, { once: true });
+    }
+    
+    function listenToGameInvites() {
+        db.ref('gameInvite').on('value', (snapshot) => {
+            const invite = snapshot.val();
+            if (invite && invite.from !== myName && invite.status === 'waiting') {
+                // حد بعتلي دعوة
+                let gameName = invite.game === 'xo' ? 'XO' : (invite.game === 'number' ? 'تخمين الرقم' : 'الترتيب السريع');
+                let accept = confirm(`${invite.from} عاوز يلعب معاك ${gameName}! توافقي؟`);
+                if (accept) {
+                    db.ref('gameInvite/status').set('accepted');
+                    startGame(invite.game);
+                } else {
+                    db.ref('gameInvite/status').set('rejected');
+                }
             }
         });
     }
+    
+    // ========== بدء اللعبة ==========
+    function startGame(gameType) {
+        currentGame = gameType;
+        gameReady = true;
+        myTurn = Math.random() < 0.5;  // اختيار عشوائي مين يبدأ
+        
+        if (gameType === 'xo') {
+            startXOGame();
+        } else if (gameType === 'number') {
+            startNumberGame();
+        } else if (gameType === 'quick') {
+            startQuickGame();
+        }
+    }
+    
+    // ========== لعبة XO (تيك تاك تو) ==========
+    function startXOGame() {
+        xoBoard = ['', '', '', '', '', '', '', '', ''];
+        xoGameActive = true;
+        
+        let boardHtml = '<div class="xo-board">';
+        for (let i = 0; i < 9; i++) {
+            boardHtml += `<div class="xo-cell ${xoBoard[i] === 'X' ? 'x' : (xoBoard[i] === 'O' ? 'o' : '')}" onclick="makeXOMove(${i})">${xoBoard[i]}</div>`;
+        }
+        boardHtml += '</div>';
+        
+        document.getElementById('gameArea').innerHTML = `
+            <div class="challenge-box">
+                <h3>❌⭕ XO - تيك تاك تو ❌⭕</h3>
+                ${boardHtml}
+                <p class="status-text">${myTurn ? '🎯 دورك أنت يا حبيبي 🎯' : `⏳ استنى دور ${opponentName} ⏳`}</p>
+            </div>
+        `;
+    }
+    
+    window.makeXOMove = function(index) {
+        if (!xoGameActive || !myTurn) {
+            alert("مش دورك يا حبيبي! استنى شوية 🥺");
+            return;
+        }
+        if (xoBoard[index] !== '') {
+            alert("المكان ده مش فاضي!");
+            return;
+        }
+        
+        xoBoard[index] = 'X';
+        updateXOBoard();
+        
+        // فحص الفوز
+        let winner = checkXOWinner();
+        if (winner) {
+            alert("🎉 ألف مبروك! أنت كسبت اللعبة يا روحي 🎉");
+            xoGameActive = false;
+            return;
+        }
+        
+        myTurn = false;
+        updateXOTurn();
+        
+        // نبعت الحركة للتاني
+        db.ref('gameMove').set({
+            game: 'xo',
+            move: index,
+            board: xoBoard,
+            turn: false
+        });
+    };
+    
+    function updateXOBoard() {
+        for (let i = 0; i < 9; i++) {
+            let cell = document.querySelectorAll('.xo-cell')[i];
+            if (cell) {
+                cell.innerHTML = xoBoard[i];
+                cell.className = `xo-cell ${xoBoard[i] === 'X' ? 'x' : (xoBoard[i] === 'O' ? 'o' : '')}`;
+            }
+        }
+    }
+    
+    function updateXOTurn() {
+        let statusDiv = document.querySelector('#gameArea .status-text');
+        if (statusDiv) {
+            statusDiv.innerHTML = myTurn ? '🎯 دورك أنت يا حبيبي 🎯' : `⏳ استنى دور ${opponentName} ⏳`;
+        }
+    }
+    
+    function checkXOWinner() {
+        const winPatterns = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+        for (let pattern of winPatterns) {
+            if (xoBoard[pattern[0]] && xoBoard[pattern[0]] === xoBoard[pattern[1]] && xoBoard[pattern[0]] === xoBoard[pattern[2]]) {
+                return xoBoard[pattern[0]];
+            }
+        }
+        if (xoBoard.every(cell => cell !== '')) {
+            alert("🤝 تعادل! لعبة تانية بقى 🤝");
+            xoGameActive = false;
+            return 'tie';
+        }
+        return null;
+    }
+    
+    // استماع لحركات الخصم
+    db.ref('gameMove').on('value', (snapshot) => {
+        const move = snapshot.val();
+        if (move && move.game === 'xo' && !myTurn && xoGameActive) {
+            xoBoard = move.board;
+            myTurn = true;
+            updateXOBoard();
+            updateXOTurn();
+            
+            let winner = checkXOWinner();
+            if (winner && winner !== 'tie') {
+                alert(`😢 ${opponentName} كسب الجولة... المرة الجاية إن شاء الله 😢`);
+                xoGameActive = false;
+            }
+        }
+    });
+    
+    // ========== لعبة تخمين الرقم ==========
+    function startNumberGame() {
+        secretNumber = Math.floor(Math.random() * 100) + 1;
+        attempts = 0;
+        
+        document.getElementById('gameArea').innerHTML = `
+            <div class="challenge-box">
+                <h3>🔢 تخمين الرقم (1-100) 🔢</h3>
+                <p>خمني الرقم اللي في بالي!</p>
+                <div class="number-input">
+                    <input type="number" id="guessInput" placeholder="رقم">
+                    <button onclick="makeGuess()">خمن</button>
+                </div>
+                <div id="guessHint" style="margin-top: 15px;"></div>
+                <p class="status-text">محاولات: ${attempts}</p>
+            </div>
+        `;
+    }
+    
+    window.makeGuess = function() {
+        let input = document.getElementById('guessInput');
+        let guess = parseInt(input.value);
+        if (isNaN(guess)) return;
+        
+        attempts++;
+        let hint = '';
+        if (guess === secretNumber) {
+            hint = `🎉 صح! الرقم كان ${secretNumber} 🎉 أنت كسبتي! 🎉`;
+            alert(hint);
+            document.getElementById('guessHint').innerHTML = hint;
+        } else if (guess < secretNumber) {
+            hint = `📈 الرقم أكبر من ${guess}`;
+            document.getElementById('guessHint').innerHTML = hint;
+        } else {
+            hint = `📉 الرقم أصغر من ${guess}`;
+            document.getElementById('guessHint').innerHTML = hint;
+        }
+        document.querySelector('#gameArea .status-text').innerHTML = `محاولات: ${attempts}`;
+        input.value = '';
+    };
+    
+    // ========== لعبة الترتيب السريع ==========
+    function startQuickGame() {
+        // أرقام عشوائية للترتيب
+        sequence = [5, 2, 8, 1, 9];
+        userSequence = [];
+        
+        document.getElementById('gameArea').innerHTML = `
+            <div class="challenge-box">
+                <h3>⚡ رتب الأرقام تصاعدياً ⚡</h3>
+                <p>الأرقام: <strong>${sequence.join(', ')}</strong></p>
+                <p>رتبهم من الأصغر للأكبر:</p>
+                <div class="number-input">
+                    <input type="text" id="sortedInput" placeholder="مثال: 1,2,5,8,9">
+                    <button onclick="checkOrder()">تأكيد</button>
+                </div>
+                <div id="orderResult"></div>
+            </div>
+        `;
+    }
+    
+    window.checkOrder = function() {
+        let input = document.getElementById('sortedInput');
+        let userSorted = input.value.split(',').map(n => parseInt(n.trim()));
+        let correctSorted = [...sequence].sort((a,b) => a-b);
+        
+        let isCorrect = JSON.stringify(userSorted) === JSON.stringify(correctSorted);
+        if (isCorrect) {
+            document.getElementById('orderResult').innerHTML = '🎉 صح يا عبقري! أنت كسبت اللعبة 🎉';
+            alert("🎉 برافو عليكي! ذكية جداً 🎉");
+        } else {
+            document.getElementById('orderResult').innerHTML = `😢 للأسف... الترتيب الصح هو: ${correctSorted.join(', ')} 😢`;
+        }
+    };
+    
+    // ربط الدوال
+    window.setUserName = setUserName;
+    window.sendMessage = sendMessage;
+    window.selectGame = selectGame;
+    window.makeXOMove = makeXOMove;
+    window.makeGuess = makeGuess;
+    window.checkOrder = checkOrder;
     
     // التبديل بين التبويبات
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -429,11 +615,6 @@
             document.getElementById(tabId).classList.add('active');
         });
     });
-    
-    // ربط الدوال بالـ window
-    window.sendMessage = sendMessage;
-    window.setUserName = setUserName;
-    window.submitAnswer = submitAnswer;
 </script>
 </body>
 </html>
