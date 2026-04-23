@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>🎮 لعبتنا احنا الاتنين | حبيبي وحبيبتي</title>
+    <!-- Firebase SDKs - النسخة اللي بتشتغل بدون import -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Segoe UI', 'Cairo', system-ui, sans-serif;
+            background: linear-gradient(145deg, #2b1a2e 0%, #1a0f1f 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tab-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: #ff6b8b;
+            box-shadow: 0 0 15px #ff6b8b;
+        }
+        .tab-content {
+            display: none;
+            background: rgba(255,255,255,0.95);
+            border-radius: 40px;
+            padding: 20px;
+            min-height: 500px;
+        }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        h2 { color: #b13e5c; text-align: center; margin-bottom: 20px; font-size: 1.5rem; }
+        
+        /* الشات */
+        .chat-container { display: flex; flex-direction: column; height: 400px; }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            background: #fef0f3;
+            border-radius: 25px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .message {
+            margin: 8px 0;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
+        .message.me {
+            background: #ff8aa1;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .message.her {
+            background: #e0d6e8;
+            color: #2d1b36;
+        }
+        .chat-input-area { display: flex; gap: 10px; }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ffb7c5;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        .chat-input-area button {
+            background: #ff6b8b;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* الألغاز */
+        .puzzle-box { text-align: center; }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #a12a44;
+            margin: 15px 0;
+            background: #ffe4ec;
+            padding: 20px;
+            border-radius: 30px;
+        }
+        .options { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
+        .option-btn {
+            background: #ff8aa1;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 40px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option-btn:active { transform: scale(0.95); }
+        .score-area {
+            margin-top: 15px;
+            padding: 15px;
+            background: #ffe4ec;
+            border-radius: 30px;
+            font-size: 1rem;
+            color: #b13e5c;
+            font-weight: bold;
+        }
+        
+        /* إعدادات المستخدم */
+        .setup-area {
+            background: rgba(255,255,255,0.95);
+            padding: 30px 20px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .setup-area h2 { color: #b13e5c; margin-bottom: 15px; }
+        .setup-area p { color: #4a2c33; margin-bottom: 20px; }
+        .setup-area input {
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: 2px solid #ffb7c5;
+            margin: 10px;
+            font-size: 1rem;
+            width: 80%;
+            text-align: center;
+        }
+        .setup-area button {
+            background: #ff6b8b;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .status-badge {
+            background: #ff6b8b20;
+            padding: 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #b13e5c;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        button:active { transform: scale(0.96); }
+        
+        @media (max-width: 550px) {
+            .tab-btn { padding: 6px 14px; font-size: 0.8rem; }
+            h2 { font-size: 1.3rem; }
+            .question-text { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- شاشة إعداد الاسم -->
+    <div id="setupScreen" class="setup-area">
+        <div style="font-size: 3rem;">💕</div>
+        <h2>أهلاً بيكي يا أجمل بنت في الدنيا</h2>
+        <p>قوليلي اسمك عشان نبدأ اللعبة سوا 🤍</p>
+        <input type="text" id="userName" placeholder="أكتبي اسمك هنا..." autocomplete="off">
+        <button onclick="setUserName()">✨ أبدأي اللعبة ✨</button>
+    </div>
+
+    <!-- اللعبة نفسها (تظهر بعد ما تدخل الاسم) -->
+    <div id="gameScreen" style="display: none;">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="chat">💬 شاتنا</button>
+            <button class="tab-btn" data-tab="puzzle">🧩 ألغازنا</button>
+        </div>
+
+        <div id="chat" class="tab-content active">
+            <h2>💕 نتكلم مع بعض 💕</h2>
+            <div class="chat-container">
+                <div class="messages" id="messages">
+                    <div class="message her">✨ أهلاً يا حبيبي! أنا هنا معاك يا روحي ✨</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="اكتبلي يا حبيبي... 💌" onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button onclick="sendMessage()">إرسال ➤</button>
+                </div>
+            </div>
+            <div class="status-badge" id="chatStatus">🟢 متصلين ببعض</div>
+        </div>
+
+        <div id="puzzle" class="tab-content">
+            <h2>🧠 مين يكسب النقطة؟ 🧠</h2>
+            <div class="puzzle-box">
+                <div class="question-text" id="puzzleQuestion">جاري تحميل اللغز...</div>
+                <div class="options" id="puzzleOptions"></div>
+                <div class="score-area" id="scoreArea">
+                    ⭐ في انتظار المنافس... ⭐
+                </div>
+            </div>
+            <div class="status-badge" id="puzzleStatus">⏳ استنى اللغز الجاي</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== 🔥 بيانات Firebase بتاعتك (حطيتها زي ما بعتهالي) 🔥 ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyCvn2CsKgRvtcGDNHv-T-y8jCQUz1KTYYI",
+        authDomain: "mylovegame.firebaseapp.com",
+        projectId: "mylovegame",
+        storageBucket: "mylovegame.firebasestorage.app",
+        messagingSenderId: "504852537460",
+        appId: "1:504852537460:web:bdc7129ae84c8ea9c33121",
+        databaseURL: "https://mylovegame-default-rtdb.firebaseio.com"  // ← ضفت الـ databaseURL
+    };
+    // =================================================================
+
+    // تهيئة Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    let myName = "";
+    let myScore = 0;
+    let opponentScore = 0;
+    let currentPuzzle = null;
+    let canAnswer = true;
+    let puzzleTimeout = null;
+    let waitingForNext = false;
+    
+    // ========== الأسئلة (زود اللي تحب) ==========
+    const questions = [
+        { text: "💕 أول مرة قابلتني فيها كانت فين؟", options: ["في الجامعة/الشغل", "في الحلم", "في الشارع", "على النت"], correct: 0 },
+        { text: "💕 أي لون بحبه عليكي أكتر حاجة؟", options: ["وردي", "أحمر", "أزرق سماوي", "أبيض"], correct: 0 },
+        { text: "💕 أول هدية جبتها ليكي كانت إيه؟", options: ["ورد", "شوكولاتة", "قلادة", "عطر"], correct: 0 },
+        { text: "💕 أغنية بحبها وبفكر بيكي لما بسمعها؟", options: ["بحبك يا حبيبتي", "عيون قلبي", "قدام الناس", "كل سنة وانت حبيبتي"], correct: 1 },
+        { text: "💕 مين اللي قال كلمة 'بحبك' الأول؟", options: ["أنا", "أنتي", "الاتنين مع بعض"], correct: 0 },
+        { text: "💕 أكتر حاجة بحبها فيكي؟", options: ["ضحكتك", "عيونك", "كل حاجة فيكي", "زعلك الحلو"], correct: 2 },
+        { text: "💕 مكان مفضل لينا نتقابل فيه؟", options: ["مكان هادي", "مطعم", "البيت", "أي حتة معاك"], correct: 3 },
+        { text: "💕 صفة بحبها في شخصيتك؟", options: ["حنونة", "مضحكة", "ذكية", "كلهم"], correct: 3 }
+    ];
+    
+    function getRandomQuestion() {
+        return questions[Math.floor(Math.random() * questions.length)];
+    }
+    
+    function loadNewPuzzle() {
+        if (waitingForNext) return;
+        
+        const q = getRandomQuestion();
+        currentPuzzle = q;
+        canAnswer = true;
+        waitingForNext = false;
+        
+        document.getElementById('puzzleQuestion').innerHTML = `❓ ${q.text} ❓`;
+        let optionsHtml = '';
+        q.options.forEach((opt, idx) => {
+            optionsHtml += `<button class="option-btn" onclick="submitAnswer(${idx})">${opt}</button>`;
+        });
+        document.getElementById('puzzleOptions').innerHTML = optionsHtml;
+        document.getElementById('puzzleStatus').innerHTML = '⏳ دورك تجاوبي! عندك 30 ثانية ⏳';
+        
+        // مؤقت 30 ثانية
+        if (puzzleTimeout) clearTimeout(puzzleTimeout);
+        puzzleTimeout = setTimeout(() => {
+            if (canAnswer && !waitingForNext) {
+                canAnswer = false;
+                waitingForNext = true;
+                document.getElementById('puzzleOptions').innerHTML = '<p style="color:#b13e5c;">😢 انتهى الوقت! جاري تحضير لغز جديد...</p>';
+                document.getElementById('puzzleStatus').innerHTML = '⏰ الوقت خلص! لغز جديد بعد ثانيتين ⏰';
+                setTimeout(() => {
+                    waitingForNext = false;
+                    loadNewPuzzle();
+                }, 2500);
+            }
+        }, 30000);
+    }
+    
+    function submitAnswer(selectedIdx) {
+        if (!canAnswer) {
+            alert("انتهى الوقت يا قلبي! استنى اللغز الجاي 🥺");
+            return;
+        }
+        if (selectedIdx === currentPuzzle.correct) {
+            myScore++;
+            updateMyScore();
+            alert("✅ صحيح ❤️! زادت نقطة في رصيدك يا جميل ✅");
+            document.getElementById('puzzleStatus').innerHTML = '🎉 صح! تستاهلي النقطة 🎉';
+            
+            // نبعت إشارة للكل إن فيه حد كسب
+            database.ref('game/lastWinner').set({
+                name: myName,
+                score: myScore,
+                timestamp: Date.now()
+            });
+        } else {
+            alert("💔 لأ يا حبيبي... مش دي الإجابة الصحيحة. حاولي في اللغز الجاي 💔");
+            document.getElementById('puzzleStatus').innerHTML = '💔 غلط... المرة الجاية إن شاء الله 💔';
+        }
+        
+        // ننتقل للغز جديد
+        canAnswer = false;
+        waitingForNext = true;
+        setTimeout(() => {
+            waitingForNext = false;
+            loadNewPuzzle();
+        }, 2000);
+    }
+    
+    function updateMyScore() {
+        database.ref('scores/' + myName).set(myScore);
+    }
+    
+    function loadScores() {
+        database.ref('scores').on('value', (snapshot) => {
+            const scores = snapshot.val();
+            let maxOpponent = 0;
+            if (scores) {
+                for (let name in scores) {
+                    if (name !== myName && scores[name] > maxOpponent) {
+                        maxOpponent = scores[name];
+                    }
+                }
+                opponentScore = maxOpponent;
+            }
+            const scoreElement = document.getElementById('scoreArea');
+            if (scoreElement) {
+                scoreElement.innerHTML = `
+                    ⭐ ${myName} : ${myScore} نقطة ⭐<br>
+                    🌸 المنافس/ة : ${opponentScore} نقطة 🌸<br>
+                    ${myScore > opponentScore ? '🎉 انتي متقدمة يا بطل 🎉' : (myScore < opponentScore ? '💪 لسّه فيه فرصة تقدّمي 💪' : '🤝 متساويين يا روحي 🤝')}
+                `;
+            }
+        });
+    }
+    
+    // ========== الشات ==========
+    function sendMessage() {
+        let input = document.getElementById('chatInput');
+        let msg = input.value.trim();
+        if (msg === "") return;
+        
+        const messageData = {
+            name: myName,
+            text: msg,
+            timestamp: Date.now()
+        };
+        database.ref('chat').push(messageData);
+        input.value = '';
+    }
+    
+    function displayMessage(data) {
+        let msgDiv = document.getElementById('messages');
+        let msgElement = document.createElement('div');
+        msgElement.className = data.name === myName ? 'message me' : 'message her';
+        msgElement.innerHTML = `<strong>${data.name === myName ? 'أنا' : data.name}</strong><br>${data.text}`;
+        msgDiv.appendChild(msgElement);
+        msgDiv.scrollTop = msgDiv.scrollHeight;
+    }
+    
+    // ========== إعداد المستخدم ==========
+    function setUserName() {
+        let nameInput = document.getElementById('userName');
+        let name = nameInput.value.trim();
+        if (name === "") {
+            alert("اكتبي اسمك يا روحي 🤍");
+            return;
+        }
+        myName = name;
+        
+        document.getElementById('setupScreen').style.display = 'none';
+        document.getElementById('gameScreen').style.display = 'block';
+        
+        // تحميل أول لغز
+        loadNewPuzzle();
+        
+        // تحميل النقاط
+        loadScores();
+        
+        // استماع للشات
+        database.ref('chat').on('child_added', (snapshot) => {
+            displayMessage(snapshot.val());
+        });
+        
+        // استماع للفائزين (مجرد تحفيز)
+        database.ref('game/lastWinner').on('value', (snapshot) => {
+            const winner = snapshot.val();
+            if (winner && winner.name !== myName) {
+                document.getElementById('puzzleStatus').innerHTML = `🎉 ${winner.name} كسب النقطة الأخيرة! تقدري تتفوقي عليه 🎉`;
+                setTimeout(() => {
+                    if (document.getElementById('puzzleStatus')) {
+                        document.getElementById('puzzleStatus').innerHTML = '⏳ لغز جديد جاهز ⏳';
+                    }
+                }, 3000);
+            }
+        });
+    }
+    
+    // التبديل بين التبويبات
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            let tabId = btn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    
+    // ربط الدوال بالـ window
+    window.sendMessage = sendMessage;
+    window.setUserName = setUserName;
+    window.submitAnswer = submitAnswer;
+</script>
+</body>
+</html>
